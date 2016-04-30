@@ -1,9 +1,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
+#include <assert.h>
 #define N 11
 
 typedef enum color { DULL, BLUE, RED } e_Color;
+typedef enum game_mode { P_vs_P, P_vs_IA1, P_vs_IA2 } e_GameMode; 
 typedef enum state { NONE, LEFT, RIGHT, B_POS, R_POS } e_State;
 
 typedef struct		s_Coord
@@ -24,9 +27,9 @@ typedef struct			s_hexCell
 	struct s_hexCell	*downright;
 }						t_hexCell;
 
-typedef struct s_hexCell t_hexTab;
+typedef struct s_hexCell t_hexBoard;
 
-void initGrid(t_hexTab tab[N][N])
+void initGrid(t_hexBoard tab[N][N])
 {
 	int i;
 	int	j;
@@ -81,64 +84,8 @@ void initGrid(t_hexTab tab[N][N])
 		i++;
 	}
 }
-/*
-void initGrid(t_hexTab ***tab)
-{
-	int i;
-	int	j;
 
-	i = 0;
-	(*tab[1][0]).color = RED;
-	while (i < N)
-	{
-		j = 0;
-		while (j < N)
-		{
-			tab[i][j]->state = NONE;
-			tab[i][j]->color = DULL;
-			if (i > 0)
-			{
-				tab[i][j]->upright = tab[i - 1][j];
-				if (j != 0)
-					tab[i][j]->upleft = tab[i - 1][j - 1];
-			}
-			if (i < N - 1)
-			{
-				tab[i][j]->downleft = tab[i + 1][j];
-				if (j < N - 1)
-					tab[i][j]->downright = tab[i + 1][j + 1];
-			}
-			if (j < N - 1)
-				tab[i][j]->right = tab[i][j + 1];
-			if (j > 0)
-				tab[i][j]->left = tab[i][j - 1];
-			if (i == 0)
-			{
-				tab[i][j]->upright = NULL;
-				tab[i][j]->upleft = NULL;
-			}
-			else if (i == N - 1)
-			{
-				tab[i][j]->downright = NULL;
-				tab[i][j]->downleft = NULL;
-			}
-			if (j == 0)
-			{
-				tab[i][j]->upleft = NULL;
-				tab[i][j]->left = NULL;
-			}
-			else if (j == N - 1)
-			{
-				tab[i][j]->right = NULL;
-				tab[i][j]->downright = NULL;
-			}
-			j++;
-		}
-		i++;
-	}
-}
-*/
-bool same_color(t_hexTab *hT, e_Color color)
+bool same_color(t_hexBoard *hT, e_Color color)
 {
 	if (hT != NULL)
 	{
@@ -148,7 +95,7 @@ bool same_color(t_hexTab *hT, e_Color color)
 	return (false);
 }
 
-bool win_condition(t_hexTab *hT)
+bool win_condition(t_hexBoard *hT)
 {
 	bool left;
 	bool right;
@@ -261,84 +208,8 @@ bool win_condition(t_hexTab *hT)
 	}
 	return (left & right);
 }
-/*
-void spread(t_hexTab **tab, e_Color color, e_State state)
-{
-	if (color == BLUE)
-	{
-		if ((*tab)->upleft != NULL && (*tab)->upleft->state == B_POS)
-		{
-			spread(&((*tab)->upleft), color, state);
-			(*tab)->upleft->state = state;
-		}
-		if ((*tab)->upright != NULL && (*tab)->upright->state == B_POS)
-		{
-			spread(&((*tab)->upright), color, state);
-			(*tab)->upright->state = state;
-		}
-		if ((*tab)->left != NULL && (*tab)->left->state == B_POS)
-		{
-			spread(&((*tab)->left), color, state);
-			(*tab)->left->state = state;
-		}
-		if ((*tab)->right != NULL && (*tab)->right->state == B_POS)
-		{
-			spread(&((*tab)->right), color, state);
-			(*tab)->right->state = state;
-		}
-		if ((*tab)->downleft != NULL && (*tab)->downleft->state == B_POS)
-		{
-			spread(&((*tab)->downleft), color, state);
-			(*tab)->downleft->state = state;
-		}
-		if ((*tab)->downright != NULL && (*tab)->downright->state == B_POS)
-		{
-			spread(&((*tab)->downright), color, state);
-			(*tab)->downright->state = state;
-		}
-	}
-	else
-	{
-		if ((*tab)->upleft != NULL && (*tab)->upleft->state == R_POS)
-		{
-			printf("HEY\n");
-			spread(&((*tab)->upleft), color, state);
-			(*tab)->upleft->state = state;
-		}
-		if ((*tab)->upright != NULL && (*tab)->upright->state == R_POS)
-		{
-			printf("HEY\n");
-			spread(&((*tab)->upright), color, state);
-			(*tab)->upright->state = state;
-		}
-		if ((*tab)->left != NULL && (*tab)->left->state == R_POS)
-		{
-			printf("HEY\n");
-			spread(&((*tab)->left), color, state);
-			(*tab)->left->state = state;
-		}
-		if ((*tab)->right != NULL && (*tab)->right->state == R_POS)
-		{
-			printf("HEY\n");
-			spread(&((*tab)->right), color, state);
-			(*tab)->right->state = state;
-		}
-		if ((*tab)->downleft != NULL && (*tab)->downleft->state == R_POS)
-		{
-			printf("HEY\n");
-			spread(&((*tab)->downleft), color, state);
-			(*tab)->downleft->state = state;
-		}
-		if ((*tab)->downright != NULL && (*tab)->downright->state == R_POS)
-		{
-			printf("HEY\n");
-			spread(&((*tab)->downright), color, state);
-			(*tab)->downright->state = state;
-		}
-	}
-}*/
 
-void spread(t_hexTab *tab, e_Color color, e_State state)
+void spread(t_hexBoard *tab, e_Color color, e_State state)
 {
 	if (color == BLUE)
 	{
@@ -408,7 +279,7 @@ void spread(t_hexTab *tab, e_Color color, e_State state)
 	}
 }
 
-int addColorGrid(t_hexTab tab[N][N], e_Color color, int x, int y)
+int addColorGrid(t_hexBoard tab[N][N], e_Color color, int x, int y)
 {
 	if (tab[x][y].color == DULL)
 	{
@@ -428,36 +299,101 @@ int addColorGrid(t_hexTab tab[N][N], e_Color color, int x, int y)
 	}
 	return (2);
 }
-/*
-int addColorGridv2(t_hexTab ***tab, e_Color color, int x, int y)
+
+void loadGame (FILE *fhex, t_hexBoard tab[N][N])
 {
-	if (tab[x][y]->color == DULL)
+	char	*str;
+	e_Color color;
+	int		x;
+	int		y;
+
+	str = (char *)malloc(sizeof(char) * 20);
+	assert(str != NULL);
+	if ((fhex = fopen("save.txt", "r")) != NULL)
 	{
-		tab[x][y]->color = color;
-		if (win_condition(&(*tab[x][y])))
-			return (1);
-		else if (tab[x][y]->state == NONE)
+		fseek(fhex, sizeof(char) * (N * (N + 1) + 28), SEEK_SET);
+		while (fgets(str, 20, fhex) != NULL && strcmp(str, "\\endgame\n"))
 		{
-			if (color == BLUE)
-				tab[x][y]->state = B_POS;
+			if (str[6] == 'B')
+				color = BLUE;
+			else if (str[6] == 'R')
+				color = RED;
 			else
-				tab[x][y]->state = R_POS;
+			{
+				free(str);
+				fprintf(stderr, "1 : erreur dans le fichier save.txt\n");
+				exit(EXIT_FAILURE);
+			}
+			x = atoi(&str[8]);
+			y = atoi(&str[10]);
+			if (x < 0 || x > 10 || y < 0 || y > 10)
+			{
+				free(str);
+				fprintf(stderr, "2 : erreur dans le fichier save.txt\n");
+				exit(EXIT_FAILURE);
+			}
+			if (addColorGrid(tab, color, x, y) == 1)
+			{
+				if (color == BLUE)
+					printf("BLUE WON !!\n");
+				else
+					printf("RED WON !!\n");
+			}
 		}
-		else
-			spread(&(tab[x][y]), color, tab[x][y]->state);
-		return (0);
+		fclose(fhex);
 	}
-	return (2);
+	free(str);
 }
-*/
+
+void saveGame(FILE *fgame, e_Color color, int x, int y)
+{
+	if (fgame == NULL)
+	{
+		fgame = fopen("game.txt", "a+");
+		fprintf(fgame, "\\game\n");
+	}
+	if (color == BLUE)
+		fprintf(fgame, "\\play B %d %d\n", x, y);
+	else
+		fprintf(fgame, "\\play R %d %d\n", x, y);
+}
+
+void saveBoard(char *name, t_hexBoard tab[N][N])
+{
+	FILE		*fboard;
+	int			i;
+	int			j;
+
+	fboard = fopen(name, "w");
+	fprintf(fboard, "\\board\n");
+	for (i = 0; i < N; i++)
+	{
+		for (j = 0; j < N; j++)
+		{
+			if (tab[i][j].color == RED)
+				fprintf(fboard, "R");
+			else if (tab[i][j].color == BLUE)
+				fprintf(fboard, "B");
+			else
+				fprintf(fboard, ".");
+		}
+		fprintf(fboard, "\n");
+	}
+	fprintf(fboard, "\\endboard\n");
+	fclose(fboard);
+}
+
+
+
 int main(void)
 {
-	t_hexTab tab[N][N];
-	int i;
-	int x;
+	t_hexBoard tab[N][N];
+	FILE *save;
 
+	save = NULL;
 	initGrid(tab);
-	addColorGrid(tab, RED, 3, 4);
+	loadGame(save, tab);
+	/*addColorGrid(tab, RED, 3, 4);
 	addColorGrid(tab, RED, 2, 4);
 	printf("%d\n", tab[3][4].state);
 	for (i = 0; i < 5; i++)
@@ -480,5 +416,7 @@ int main(void)
 		printf("OK");
 	printf("%d\n", tab[3][4].state);
 	printf("%d\n", tab[2][4].state);
+	*/saveBoard("board.txt", tab);
+//	remove("board.txt");
 	return (0);
 }
