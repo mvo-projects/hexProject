@@ -3,31 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#define N 11
-
-typedef enum color { DULL, BLUE, RED } e_Color;
-typedef enum game_mode { P_vs_P, P_vs_IA1, P_vs_IA2 } e_GameMode; 
-typedef enum state { NONE, LEFT, RIGHT, B_POS, R_POS } e_State;
-
-typedef struct		s_Coord
-{
-	double			x;
-	double			y;
-}					t_Coord;
-
-typedef struct			s_hexCell
-{
-	e_Color				color;
-	e_State				state;
-	struct s_hexCell	*upleft;
-	struct s_hexCell	*upright;
-	struct s_hexCell	*left;
-	struct s_hexCell	*right;
-	struct s_hexCell	*downleft;
-	struct s_hexCell	*downright;
-}						t_hexCell;
-
-typedef struct s_hexCell t_hexBoard;
+#include "board.h"
 
 void initGrid(t_hexBoard tab[N][N])
 {
@@ -279,29 +255,30 @@ void spread(t_hexBoard *tab, e_Color color, e_State state)
 	}
 }
 
-int addColorGrid(t_hexBoard tab[N][N], e_Color color, int x, int y)
+int addColorGrid(t_hexBoard tab[N][N], e_Color color, int y, int x)
 {
-	if (tab[x][y].color == DULL)
+	if (tab[y][x].color == DULL)
 	{
-		tab[x][y].color = color;
-		if (win_condition(&(tab[x][y])))
+		tab[y][x].color = color;
+		if (win_condition(&(tab[y][x])))
 			return (1);
-		else if (tab[x][y].state == NONE)
+		else if (tab[y][x].state == NONE)
 		{
 			if (color == BLUE)
-				tab[x][y].state = B_POS;
+				tab[y][x].state = B_POS;
 			else
-				tab[x][y].state = R_POS;
+				tab[y][x].state = R_POS;
 		}
 		else
-			spread(&(tab[x][y]), color, tab[x][y].state);
+			spread(&(tab[y][x]), color, tab[y][x].state);
 		return (0);
 	}
 	return (2);
 }
 
-void loadGame (FILE *fhex, t_hexBoard tab[N][N])
+void loadGame(const char *name, t_hexBoard tab[N][N])
 {
+	FILE	*fhex;
 	char	*str;
 	e_Color color;
 	int		x;
@@ -309,7 +286,7 @@ void loadGame (FILE *fhex, t_hexBoard tab[N][N])
 
 	str = (char *)malloc(sizeof(char) * 20);
 	assert(str != NULL);
-	if ((fhex = fopen("save.txt", "r")) != NULL)
+	if ((fhex = fopen(name, "r")) != NULL)
 	{
 		fseek(fhex, sizeof(char) * (N * (N + 1) + 28), SEEK_SET);
 		while (fgets(str, 20, fhex) != NULL && strcmp(str, "\\endgame\n"))
@@ -345,7 +322,7 @@ void loadGame (FILE *fhex, t_hexBoard tab[N][N])
 	free(str);
 }
 
-void saveGame(FILE *fgame, e_Color color, int x, int y)
+void printPlay(FILE *fgame, e_Color color, int x, int y)
 {
 	if (fgame == NULL)
 	{
@@ -358,7 +335,7 @@ void saveGame(FILE *fgame, e_Color color, int x, int y)
 		fprintf(fgame, "\\play R %d %d\n", x, y);
 }
 
-void saveBoard(char *name, t_hexBoard tab[N][N])
+void saveBoard(const char *name, t_hexBoard tab[N][N])
 {
 	FILE		*fboard;
 	int			i;
@@ -383,17 +360,15 @@ void saveBoard(char *name, t_hexBoard tab[N][N])
 	fclose(fboard);
 }
 
-
+/*
 
 int main(void)
 {
 	t_hexBoard tab[N][N];
-	FILE *save;
 
-	save = NULL;
 	initGrid(tab);
-	loadGame(save, tab);
-	/*addColorGrid(tab, RED, 3, 4);
+	loadGame("save.txt", tab);
+	addColorGrid(tab, RED, 3, 4);
 	addColorGrid(tab, RED, 2, 4);
 	printf("%d\n", tab[3][4].state);
 	for (i = 0; i < 5; i++)
@@ -416,7 +391,7 @@ int main(void)
 		printf("OK");
 	printf("%d\n", tab[3][4].state);
 	printf("%d\n", tab[2][4].state);
-	*/saveBoard("board.txt", tab);
-//	remove("board.txt");
+	saveBoard("board.txt", tab);
+	remove("board.txt");
 	return (0);
-}
+}*/
