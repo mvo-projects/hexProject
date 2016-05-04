@@ -11,7 +11,6 @@ void initGrid(t_hexBoard tab[N][N])
 	int	j;
 
 	i = 0;
-	tab[1][0].color = RED;
 	while (i < N)
 	{
 		j = 0;
@@ -78,31 +77,25 @@ bool win_condition(t_hexBoard *hT)
 
 	left = false;
 	right = false;
-	if (hT->upleft == NULL)
+	if (hT->left == NULL && hT->color == RED)
 	{
-		if (hT->downleft == NULL && hT->color == BLUE)
-		{
-			hT->state = RIGHT;
-			right = true;
-		}
-		else
-		{
-			hT->state = LEFT;
-			left = true;
-		}
+		hT->state = LEFT;
+		left = true;
 	}
-	if (hT->downright == NULL)
+	else if (hT->upright == NULL && hT->color == BLUE)
 	{
-		if (hT->upright == NULL && hT->color == BLUE)
-		{
-			hT->state = LEFT;
-			left = true;
-		}
-		else
-		{
-			hT->state = RIGHT;
-			right = true;
-		}
+		hT->state = LEFT;
+		left = true;
+	}
+	else if (hT->right == NULL && hT->color == RED)
+	{
+		hT->state = RIGHT;
+		right = true;
+	}
+	else if (hT->downright == NULL && hT->color == BLUE)
+	{
+		hT->state = RIGHT;
+		right = true;
 	}
 	if (same_color(hT->upleft, hT->color))
 	{
@@ -276,13 +269,79 @@ int addColorGrid(t_hexBoard tab[N][N], e_Color color, int y, int x)
 	return (2);
 }
 
-void loadGame(const char *name, t_hexBoard tab[N][N])
+void undoGame(int line)
+{
+	FILE	*old_one;
+	FILE	*new_one;
+	char	*str;
+
+	str = (char *)malloc(sizeof(char) * 15);
+	assert(str != NULL);
+	if (line != 0 && (old_one = fopen(".tmpgame.txt", "r")) != NULL)
+	{
+		if ((new_one = fopen(".tmpgame1.txt", "w")) != NULL)
+		{
+			while (line != 0 && feof(old_one) == 0 && fgets(str, 15, old_one) != NULL)
+			{
+				if (feof(old_one) != 0)
+					break;
+				line--;
+				fprintf(new_one, "%s", str);
+			}
+		}
+	}
+	if (old_one != NULL)
+		fclose(old_one);
+	if (new_one != NULL)
+		fclose(new_one);
+	free(str);
+	remove(".tmpgame.txt");
+	rename(".tmpgame1.txt", ".tmpgame.txt");
+}
+
+int loadUndo(t_hexBoard tab[N][N], int *py, int *px)
+{
+	FILE *fgame;
+	char *str;
+	e_Color color;
+	int		i;
+	int		turn;
+
+	turn = 1;
+	str = (char *)malloc(sizeof(char) * 15);
+	assert(str != NULL);
+	if ((fgame = fopen(".tmpgame.txt", "r")) == NULL)
+	{
+		fprintf(stderr, "Erreur lecture de .tmpgame\n");
+		exit(EXIT_FAILURE);
+	}
+	i = 0;
+	while (feof(fgame) == 0 && fgets(str, 15, fgame) != NULL)
+	{
+		if (feof(fgame) != 0)
+			break;
+		if (i != 0)
+		{
+			if (str[6] == 'B')
+				color = BLUE;
+			else
+				color = RED;
+			*py = atoi(&str[8]);
+			*px = atoi(&str[10]);
+			addColorGrid(tab, color, *py, *px);
+			turn = 1 - turn;
+		}
+		else
+			i = 1;
+	}
+	return (turn);
+}
+
+void loadGame(const char *name, t_hexBoard tab[N][N], int *y, int *x)
 {
 	FILE	*fhex;
 	char	*str;
 	e_Color color;
-	int		x;
-	int		y;
 
 	str = (char *)malloc(sizeof(char) * 20);
 	assert(str != NULL);
@@ -301,15 +360,15 @@ void loadGame(const char *name, t_hexBoard tab[N][N])
 				fprintf(stderr, "1 : erreur dans le fichier save.txt\n");
 				exit(EXIT_FAILURE);
 			}
-			x = atoi(&str[8]);
-			y = atoi(&str[10]);
-			if (x < 0 || x > 10 || y < 0 || y > 10)
+			*x = atoi(&str[8]);
+			*y = atoi(&str[10]);
+			if (*x < 0 || *x > 10 || *y < 0 || *y > 10)
 			{
 				free(str);
 				fprintf(stderr, "2 : erreur dans le fichier save.txt\n");
 				exit(EXIT_FAILURE);
 			}
-			if (addColorGrid(tab, color, x, y) == 1)
+			if (addColorGrid(tab, color, *y, *x) == 1)
 			{
 				if (color == BLUE)
 					printf("BLUE WON !!\n");
@@ -322,17 +381,41 @@ void loadGame(const char *name, t_hexBoard tab[N][N])
 	free(str);
 }
 
-void printPlay(FILE *fgame, e_Color color, int x, int y)
+
+int countlinegame(void)
 {
-	if (fgame == NULL)
+	FILE *fgame;
+	char *str;
+	int	count;
+
+	count = 0;
+	str = (char *)malloc(sizeof(char) * 15);
+	if ((fgame = fopen(".tmpgame.txt", "r")) != NULL)
 	{
-		fgame = fopen("game.txt", "a+");
-		fprintf(fgame, "\\game\n");
+		while (feof(fgame) == 0 && fgets(str, 15, fgame) != NULL)
+		{
+			if (feof(fgame) != 0)
+				break;
+			count++;
+		}
+		count = count - 1;
+		fclose(fgame);
+	}
+	return (count);
+}
+
+void printPlay(FILE **fgame, e_Color color, int x, int y)
+{
+	if (*fgame == NULL)
+	{
+		*fgame = fopen(".tmpgame.txt", "a");
+		if (countlinegame() < 0)
+			fprintf(*fgame, "\\game\n");
 	}
 	if (color == BLUE)
-		fprintf(fgame, "\\play B %d %d\n", x, y);
+		fprintf(*fgame, "\\play B %d %d\n", x, y);
 	else
-		fprintf(fgame, "\\play R %d %d\n", x, y);
+		fprintf(*fgame, "\\play R %d %d\n", x, y);
 }
 
 void saveBoard(const char *name, t_hexBoard tab[N][N])
@@ -360,14 +443,15 @@ void saveBoard(const char *name, t_hexBoard tab[N][N])
 	fclose(fboard);
 }
 
-/*
 
+/*
 int main(void)
 {
 	t_hexBoard tab[N][N];
 
 	initGrid(tab);
-	loadGame("save.txt", tab);
+	undoGame("save.txt", 10);
+	//loadGame("save.txt", tab);
 	addColorGrid(tab, RED, 3, 4);
 	addColorGrid(tab, RED, 2, 4);
 	printf("%d\n", tab[3][4].state);

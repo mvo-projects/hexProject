@@ -22,6 +22,7 @@ int chooseMode(SDL_Surface* screen, TTF_Font* font)
 	SDL_Color color[3] = {{0,0,0,0}, {255,0,0,0}, {255,255,255,0}};
 	int x, y;
 	int i, j;
+	SDL_Event event;
 
 	i = 0;
 	while (i < NUMMODE - 1)
@@ -38,7 +39,6 @@ int chooseMode(SDL_Surface* screen, TTF_Font* font)
  	imgmain = IMG_Load("images/main.png");
 	SDL_BlitSurface(imgmain, NULL, screen, NULL);
 	SDL_Flip(screen);
-	SDL_Event event;
 	while (1)
 	{
 		time = SDL_GetTicks();
@@ -112,6 +112,29 @@ int chooseMode(SDL_Surface* screen, TTF_Font* font)
 	}
 }
 
+ 
+void drawBall(SDL_Surface* screen, e_Color color, int y, int x)
+{
+	SDL_Surface *ball;
+	SDL_Rect	topleft;
+	SDL_Rect	pos;
+	int			gap1;
+	int			gap2;
+
+	topleft.x = 302;
+	topleft.y = 167;
+	gap1 = 27;
+	gap2 = 15;
+	if (color == RED)
+		ball = IMG_Load("images/redball.png");
+	else
+		ball = IMG_Load("images/blueball.png");
+	pos.y = topleft.y + y * gap1;
+	pos.x = topleft.x + ((x * 2) - y) * gap2;
+	SDL_BlitSurface(ball, NULL, screen, &pos);
+	SDL_FreeSurface(ball);
+} 
+/*
 void drawBall(SDL_Surface* screen, e_Color color, SDL_Rect point)
 {
 	SDL_Surface *ball;
@@ -133,6 +156,27 @@ void drawBall(SDL_Surface* screen, e_Color color, SDL_Rect point)
 	SDL_BlitSurface(ball, NULL, screen, &pos);
 	SDL_FreeSurface(ball);
 } 
+*/
+
+void displayBoard(SDL_Surface* screen, t_hexBoard tab[N][N])
+{
+	int y;
+	int x;
+
+	for (y = 0; y < N; y++)
+	{
+		for (x = 0; x < N; x++)
+		{
+			if (tab[y][x].color != DULL)
+			{
+				if (tab[y][x].color == BLUE)
+					drawBall(screen, BLUE, y, x);
+				else if (tab[y][x].color == RED)
+					drawBall(screen, RED, y, x);
+			}
+		}
+	}
+}
 
 int chooseStart(SDL_Surface* screen, TTF_Font* font, const char *name)
 {
@@ -146,6 +190,7 @@ int chooseStart(SDL_Surface* screen, TTF_Font* font, const char *name)
 	SDL_Rect pos[6];
 	bool selected[NUMMENU] = {false, false, false};
 	SDL_Color color[3] = {{0,0,0,0}, {255,0,0,0}, {255,255,255,0}};
+	SDL_Event event;
 	int x, y;
 	int i, j;
 
@@ -178,7 +223,6 @@ int chooseStart(SDL_Surface* screen, TTF_Font* font, const char *name)
 	SDL_BlitSurface(print_name[2], NULL, screen, &pos[5]);
 
 	SDL_Flip(screen);
-	SDL_Event event;
 	while (1)
 	{
 		time = SDL_GetTicks();
@@ -269,6 +313,7 @@ int chooseMenu(SDL_Surface* screen, TTF_Font* font)
 	SDL_Rect pos[NUMMENU];
 	bool selected[NUMMENU] = {false, false, false};
 	SDL_Color color[2] = {{0,0,0,0},{255,0,0,0}};
+	SDL_Event event;
 	int x, y;
 	int i, j;
 
@@ -284,7 +329,6 @@ int chooseMenu(SDL_Surface* screen, TTF_Font* font)
  	imgmain = IMG_Load("images/main.png");
 	SDL_BlitSurface(imgmain, NULL, screen, NULL);
 	SDL_Flip(screen);
-	SDL_Event event;
 	while (1)
 	{
 		time = SDL_GetTicks();
@@ -441,14 +485,86 @@ SDL_Rect findIndex(int x, int y)
 	return (res);
 }
 
-void freeandprint(SDL_Surface *screen, TTF_Font* font, SDL_Surface *str, const char *word, SDL_Color color, SDL_Rect pos)
+void freeandprint(SDL_Surface *screen, TTF_Font* font, SDL_Surface **str, const char *word, SDL_Color color, SDL_Rect pos)
 {
-	SDL_FreeSurface(str);
-	str = TTF_RenderText_Solid(font, word, color);
-	SDL_BlitSurface(str, NULL, screen, &pos);
+	if (*str != NULL)
+		SDL_FreeSurface(*str);
+	*str = TTF_RenderText_Solid(font, word, color);
+	SDL_BlitSurface(*str, NULL, screen, &pos);
 }
 
-int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int mode, int start)
+void addPlayersWithMode(SDL_Surface *str[6], TTF_Font *font, const char *players[NUMPLAYER], int mode, int start, SDL_Color color[4], e_Color ecolor)
+{
+	if (start == 1)
+	{
+		if (mode == 0)
+		{
+			if (ecolor == RED)
+				str[1] = TTF_RenderText_Solid(font, players[1], color[1]);
+			else
+				str[1] = TTF_RenderText_Solid(font, players[1], color[3]);
+			str[2] = TTF_RenderText_Solid(font, players[2], color[0]);
+		}
+		else if (mode == 1 || mode == 2)
+		{
+			if (ecolor == RED)
+				str[1] = TTF_RenderText_Solid(font, players[0], color[1]);
+			else
+				str[1] = TTF_RenderText_Solid(font, players[0], color[3]);
+			if (mode == 1)
+				str[2] = TTF_RenderText_Solid(font, players[3], color[0]);
+			else
+				str[2] = TTF_RenderText_Solid(font, players[4], color[0]);
+		}
+		else
+		{
+			if (ecolor == RED)
+				str[1] = TTF_RenderText_Solid(font, players[3], color[1]);
+			else
+				str[1] = TTF_RenderText_Solid(font, players[3], color[3]);
+			str[2] = TTF_RenderText_Solid(font, players[4], color[0]);
+		}
+	}
+	else if (start == 0)
+	{
+		if (mode == 0)
+		{
+			str[1] = TTF_RenderText_Solid(font, players[1], color[0]);
+			if (ecolor == RED)
+				str[2] = TTF_RenderText_Solid(font, players[2], color[1]);
+			else
+				str[2] = TTF_RenderText_Solid(font, players[2], color[3]);
+		}
+		else if (mode == 1 || mode == 2)
+		{
+			str[1] = TTF_RenderText_Solid(font, players[0], color[0]);
+			if (mode == 1)
+			{
+				if (ecolor == RED)
+					str[2] = TTF_RenderText_Solid(font, players[3], color[1]);
+				else
+					str[2] = TTF_RenderText_Solid(font, players[3], color[3]);
+			}
+			else
+			{
+				if (ecolor == RED)
+					str[2] = TTF_RenderText_Solid(font, players[4], color[1]);
+				else
+					str[2] = TTF_RenderText_Solid(font, players[4], color[3]);
+			}
+		}
+		else
+		{
+			str[1] = TTF_RenderText_Solid(font, players[3], color[0]);
+			if (ecolor == RED)
+				str[2] = TTF_RenderText_Solid(font, players[4], color[1]);
+			else
+				str[2] = TTF_RenderText_Solid(font, players[4], color[3]);
+		}
+	}
+}
+
+int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int mode, int start, int turn, int lasty, int lastx)
 {
 	Uint32 time;
 	const char* labels[NUMMODE] = {"UNDO", "HISTORY", "PAUSE"};
@@ -458,11 +574,13 @@ int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int m
 	e_Color ecolor;
 	char last_x[3];
 	char last_y[3];
+	FILE *fgame;
 	SDL_Surface* menu[NUMMENU];
 	SDL_Surface* str[6];
 	SDL_Surface* imgmain;
 	SDL_Rect pos[9];
 	SDL_Rect point;
+	SDL_Event event;
 	//SDL_Rect blackrect;
 	bool selected[NUMMENU] = {false, false, false};
 	SDL_Color color[4] = {{0,0,0,0}, {255,0,0,0}, {255,255,255,0}, {0,0,255,0}};
@@ -474,8 +592,8 @@ int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int m
 	i = 0;
 	count = 0;
 	ecolor = RED;
-	last_x[0] = '\0';
-	last_y[0] = '\0';
+ 	imgmain = IMG_Load("images/board.png");
+	SDL_BlitSurface(imgmain, NULL, screen, NULL);
 	while (i < NUMMENU)
 	{
 		menu[i] = TTF_RenderText_Solid(font, labels[i], color[2]);
@@ -483,71 +601,66 @@ int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int m
 		pos[i].y = 232 + (i * 50);
 		i++;
 	}
-	str[0] = TTF_RenderText_Solid(font, sentence1, color[2]);
 	pos[3].x = 300;
 	pos[3].y = 56;
-	if (mode == 0)
+	pos[4].x = 357;
+	pos[4].y = 116;
+	pos[5].x = 186;
+	pos[5].y = pos[6].y = pos[7].y = pos[8].y = 557;
+	pos[6].x = 350;
+	pos[7].x = 520;
+	pos[8].x = 560;
+	str[0] = TTF_RenderText_Solid(font, sentence1, color[2]);
+	str[3] = TTF_RenderText_Solid(font, sentence2, color[2]);
+	if (lastx == -1 || lasty == -1)
 	{
-		if (start)
-		{
-			str[1] = TTF_RenderText_Solid(font, players[1], color[1]);
-			str[2] = TTF_RenderText_Solid(font, players[2], color[0]);
-		}
-		else
-		{
-			str[1] = TTF_RenderText_Solid(font, players[1], color[0]);
-			str[2] = TTF_RenderText_Solid(font, players[2], color[1]);
-		}
-	}
-	else if (mode == 1 || mode == 2)
-	{
-		if (start)
-		{
-			str[1] = TTF_RenderText_Solid(font, players[0], color[1]);
-			if (mode == 1)
-				str[2] = TTF_RenderText_Solid(font, players[3], color[0]);
-			else
-				str[2] = TTF_RenderText_Solid(font, players[4], color[0]);
-		}
-		else
-		{
-			str[1] = TTF_RenderText_Solid(font, players[0], color[0]);
-			if (mode == 1)
-				str[2] = TTF_RenderText_Solid(font, players[3], color[1]);
-			else
-				str[2] = TTF_RenderText_Solid(font, players[4], color[1]);
-		}
+		last_x[0] = '\0';
+		last_y[0] = '\0';
 	}
 	else
 	{
-		if (start)
+		sprintf(last_x, "%d", lastx);
+		sprintf(last_y, "%d", lasty);
+		if (tab[lasty][lastx].color == RED)
+			ecolor = BLUE;
+		else
+			ecolor = RED;
+	}
+	start = !(start ^ turn);
+	addPlayersWithMode(str, font, players, mode, start, color, ecolor);
+	if (start)
+	{
+		SDL_BlitSurface(str[2], NULL, screen, &pos[4]);
+		SDL_BlitSurface(str[1], NULL, screen, &pos[4]);
+	}
+	else
+	{
+		SDL_BlitSurface(str[1], NULL, screen, &pos[4]);
+		SDL_BlitSurface(str[2], NULL, screen, &pos[4]);
+	}
+	start = 1 - start;
+	str[4] = TTF_RenderText_Solid(font, last_y, color[2]);
+	str[5] = TTF_RenderText_Solid(font, last_x, color[2]);
+	SDL_BlitSurface(str[0], NULL, screen, &pos[3]);
+	SDL_BlitSurface(str[3], NULL, screen, &pos[5]);
+	SDL_BlitSurface(str[4], NULL, screen, &pos[7]);
+	SDL_BlitSurface(str[5], NULL, screen, &pos[8]);
+	if (lastx != -1 && lasty != -1)
+	{
+		if (1 - start)
 		{
-			str[1] = TTF_RenderText_Solid(font, players[3], color[1]);
-			str[2] = TTF_RenderText_Solid(font, players[4], color[0]);
+			SDL_BlitSurface(str[2], NULL, screen, &pos[6]);
+			SDL_BlitSurface(str[1], NULL, screen, &pos[6]);
 		}
 		else
 		{
-			str[1] = TTF_RenderText_Solid(font, players[3], color[0]);
-			str[2] = TTF_RenderText_Solid(font, players[4], color[1]);
+			SDL_BlitSurface(str[1], NULL, screen, &pos[6]);
+			SDL_BlitSurface(str[2], NULL, screen, &pos[6]);
 		}
 	}
-	pos[4].x = 357;
-	pos[4].y = 116;
-	str[3] = TTF_RenderText_Solid(font, sentence2, color[2]);
-	pos[5].x = 186;
-	pos[6].x = 450;
-	pos[7].x = 520;
-	pos[8].x = 560;
-	pos[5].y = pos[6].y = pos[7].y = pos[8].y = 557;
-	str[4] = TTF_RenderText_Solid(font, last_y, color[2]);
-	str[5] = TTF_RenderText_Solid(font, last_x, color[2]);
-
- 	imgmain = IMG_Load("images/board.png");
-	SDL_BlitSurface(imgmain, NULL, screen, NULL);
-	SDL_BlitSurface(str[0], NULL, screen, &pos[3]);
-	SDL_BlitSurface(str[3], NULL, screen, &pos[5]);
+	displayBoard(screen, tab);
 	SDL_Flip(screen);
-	SDL_Event event;
+	fgame = NULL;
 	while (1)
 	{
 		time = SDL_GetTicks();
@@ -561,7 +674,7 @@ int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int m
 					for (i = 0; i < 6; i++)
 						SDL_FreeSurface(str[i]);
 					SDL_FreeSurface(imgmain);
-					return (3);
+					return (5);
 				case SDL_MOUSEMOTION:
 					x = event.motion.x;
 					y = event.motion.y;
@@ -594,33 +707,77 @@ int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int m
 					{
 						if (x >= pos[i].x && x <= pos[i].x + pos[i].w && y >= pos[i].y && y <= pos[i].y + pos[i].h)
 						{
+							if (fgame != NULL)
+								fclose(fgame);
 							for (j = 0; j < NUMMENU; j++)
 								SDL_FreeSurface(menu[j]);
 							for (j = 0; j < 6; j++)
 								SDL_FreeSurface(str[j]);
 							SDL_FreeSurface(imgmain);
+							if (i == 0)
+							{
+								count = countlinegame();
+								undoGame(count);
+							}
 							return (i);
 						}
 					}
 					point = findIndex(x, y);
-					fprintf(stderr, "x = %d\n, y = %d\n", point.x, point.y);
+					fprintf(stderr, "x = %d, y = %d\n", point.x, point.y);
 					if (point.x != -1 && point.y != -1)
 					{
 						play = addColorGrid(tab, ecolor, point.y, point.x);
 						if (play != 2)
 						{
-							freeandprint(screen, font, str[4], last_y, color[0], pos[7]);
-							freeandprint(screen, font, str[5], last_x, color[0], pos[8]);
-							drawBall(screen, ecolor, point);
+							printPlay(&fgame, ecolor, point.y, point.x);
 							count++;
+							if (1 - start)
+							{
+								SDL_BlitSurface(str[2], NULL, screen, &pos[6]);
+								SDL_BlitSurface(str[1], NULL, screen, &pos[6]);
+							}
+							else
+							{
+								SDL_BlitSurface(str[1], NULL, screen, &pos[6]);
+								SDL_BlitSurface(str[2], NULL, screen, &pos[6]);
+							}
+							freeandprint(screen, font, &str[4], last_y, color[0], pos[7]);
+							freeandprint(screen, font, &str[5], last_x, color[0], pos[8]);
+							drawBall(screen, ecolor, point.y, point.x);
+							SDL_Flip(screen);
+							if (play == 1)
+							{
+								for (j = 0; j < NUMMENU; j++)
+									SDL_FreeSurface(menu[j]);
+								for (j = 0; j < 6; j++)
+									SDL_FreeSurface(str[j]);
+								SDL_FreeSurface(imgmain);
+								if (ecolor == RED)
+									return (3);
+								return (4);
+							}
 							if (ecolor == RED)
 								ecolor = BLUE;
 							else
 								ecolor = RED;
+							SDL_FreeSurface(str[2]);
+							SDL_FreeSurface(str[1]);
+							addPlayersWithMode(str, font, players, mode, start, color, ecolor);
+							if (start)
+							{
+								SDL_BlitSurface(str[2], NULL, screen, &pos[4]);
+								SDL_BlitSurface(str[1], NULL, screen, &pos[4]);
+							}
+							else
+							{
+								SDL_BlitSurface(str[1], NULL, screen, &pos[4]);
+								SDL_BlitSurface(str[2], NULL, screen, &pos[4]);
+							}
+							start = 1 - start;
 							sprintf(last_x, "%d", point.x);
 							sprintf(last_y, "%d", point.y);
-							freeandprint(screen, font, str[4], last_y, color[2], pos[7]);
-							freeandprint(screen, font, str[5], last_x, color[2], pos[8]);
+							freeandprint(screen, font, &str[4], last_y, color[2], pos[7]);
+							freeandprint(screen, font, &str[5], last_x, color[2], pos[8]);
 							SDL_Flip(screen);
 						}
 					}
@@ -646,23 +803,34 @@ int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int m
 }
 
 
+void removetmpfiles(void)
+{
+	remove(".tmpgame.txt");
+	remove(".tmpboard.txt");
+}
+
 int	main(void)
 {
 	SDL_Surface *screen = NULL;
 	TTF_Font *font;
 	int menu;
-	int init_newgame;
+//	int init_newgame;
 	//int load_recentgame;
 	int flag;
 	int start;
 	int	mode;
+	int play;
+	int turn;
+	int x;
+	int y;
 	t_hexBoard tab[N][N];
 
+	play = 0;
 	menu = 0;
-	init_newgame = 0;
+//	init_newgame = 0;
 //	load_recentgame = 0;
 	TTF_Init();
-	font = TTF_OpenFont("ASMAN.TTF", 30);
+	font = TTF_OpenFont("hex.TTF", 30);
 	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) == -1))
 	{
 		fprintf(stderr, "Could not initialize SDL: %s\n", SDL_GetError());
@@ -680,12 +848,7 @@ int	main(void)
 		fprintf(stderr, "menu = %d\n", menu);
 		if (menu == 0)
 		{
-			if (init_newgame == 0)
-			{
-				initGrid(tab);
-				init_newgame = 1;
-				//load_recentgame = 0;
-			}
+			initGrid(tab);
 			mode = 0;
 			flag = 1;
 			while (mode != 5 && (mode = chooseMode(screen, font)) != 5)
@@ -696,7 +859,30 @@ int	main(void)
 					if ((start = chooseStart(screen, font, "Player1")) == 3)
 						mode = 5;
 					else if (start != 2)
-						playNewGame(screen, font, tab, mode, start);
+					{
+						x = -1;
+						y = -1;
+						turn = 1;
+						if ((play = playNewGame(screen, font, tab, mode, start, turn, y, x)) == 5)
+							mode = 5;
+						else if (play == 0)
+						{
+							do
+							{
+								initGrid(tab);
+								turn = loadUndo(tab, &y, &x);
+								fprintf(stderr, "turn = %d\n y = %d\nx = %d\n", turn, y, x);
+								play = playNewGame(screen, font, tab, mode, start, turn, y, x);
+							}while (play == 0);
+						}
+						if (play == 3)
+							fprintf(stderr, "RED won\n");
+						else if (play == 4)
+							fprintf(stderr, "BLUE won\n");
+						else if (play == 5)
+							mode = 5;
+							
+					}
 				}
 				else if (mode == 1 || mode == 2)
 				{
@@ -717,13 +903,13 @@ int	main(void)
 			if (mode == 5 && flag)
 				menu = 2;
 		}
+		removetmpfiles();
 	}
 	SDL_FreeSurface(screen);
 	TTF_CloseFont(font);
 	TTF_Quit();
 	SDL_Quit();
-		
-			
+	
 /*	none = IMG_Load("images/menu.png");
 	opt1 = IMG_Load("images/button_jouer.png");
 	opt2 = IMG_Load("images/button_charger.png");
