@@ -5,7 +5,7 @@
 #include <assert.h>
 #include "board.h"
 
-void initGrid(t_hexBoard tab[N][N])
+void initGrid(t_hexBoard tab[N][N], int mode)
 {
 	int i;
 	int	j;
@@ -18,41 +18,44 @@ void initGrid(t_hexBoard tab[N][N])
 		{
 			tab[i][j].state = NONE;
 			tab[i][j].color = DULL;
-			if (i > 0)
+			if (mode == HARD_RESET)
 			{
-				tab[i][j].upright = &(tab[i - 1][j]);
-				if (j != 0)
-					tab[i][j].upleft = &(tab[i - 1][j - 1]);
-			}
-			if (i < N - 1)
-			{
-				tab[i][j].downleft = &(tab[i + 1][j]);
+				if (i > 0)
+				{
+					tab[i][j].upright = &(tab[i - 1][j]);
+					if (j != 0)
+						tab[i][j].upleft = &(tab[i - 1][j - 1]);
+				}
+				if (i < N - 1)
+				{
+					tab[i][j].downleft = &(tab[i + 1][j]);
+					if (j < N - 1)
+						tab[i][j].downright = &(tab[i + 1][j + 1]);
+				}
 				if (j < N - 1)
-					tab[i][j].downright = &(tab[i + 1][j + 1]);
-			}
-			if (j < N - 1)
-				tab[i][j].right = &(tab[i][j + 1]);
-			if (j > 0)
-				tab[i][j].left = &(tab[i][j - 1]);
-			if (i == 0)
-			{
-				tab[i][j].upright = NULL;
-				tab[i][j].upleft = NULL;
-			}
-			else if (i == N - 1)
-			{
-				tab[i][j].downright = NULL;
-				tab[i][j].downleft = NULL;
-			}
-			if (j == 0)
-			{
-				tab[i][j].upleft = NULL;
-				tab[i][j].left = NULL;
-			}
-			else if (j == N - 1)
-			{
-				tab[i][j].right = NULL;
-				tab[i][j].downright = NULL;
+					tab[i][j].right = &(tab[i][j + 1]);
+				if (j > 0)
+					tab[i][j].left = &(tab[i][j - 1]);
+				if (i == 0)
+				{
+					tab[i][j].upright = NULL;
+					tab[i][j].upleft = NULL;
+				}
+				else if (i == N - 1)
+				{
+					tab[i][j].downright = NULL;
+					tab[i][j].downleft = NULL;
+				}
+				if (j == 0)
+				{
+					tab[i][j].upleft = NULL;
+					tab[i][j].left = NULL;
+				}
+				else if (j == N - 1)
+				{
+					tab[i][j].right = NULL;
+					tab[i][j].downright = NULL;
+				}
 			}
 			j++;
 		}
@@ -92,7 +95,7 @@ bool win_condition(t_hexBoard *hT)
 		hT->state = RIGHT;
 		right = true;
 	}
-	else if (hT->downright == NULL && hT->color == BLUE)
+	else if (hT->downleft == NULL && hT->color == BLUE)
 	{
 		hT->state = RIGHT;
 		right = true;
@@ -275,6 +278,8 @@ void undoGame(int line)
 	FILE	*new_one;
 	char	*str;
 
+	old_one = NULL;
+	new_one = NULL;
 	str = (char *)malloc(sizeof(char) * 15);
 	assert(str != NULL);
 	if (line != 0 && (old_one = fopen(".tmpgame.txt", "r")) != NULL)
@@ -310,29 +315,27 @@ int loadUndo(t_hexBoard tab[N][N], int *py, int *px)
 	turn = 1;
 	str = (char *)malloc(sizeof(char) * 15);
 	assert(str != NULL);
-	if ((fgame = fopen(".tmpgame.txt", "r")) == NULL)
+	if ((fgame = fopen(".tmpgame.txt", "r")) != NULL)
 	{
-		fprintf(stderr, "Erreur lecture de .tmpgame\n");
-		exit(EXIT_FAILURE);
-	}
-	i = 0;
-	while (feof(fgame) == 0 && fgets(str, 15, fgame) != NULL)
-	{
-		if (feof(fgame) != 0)
-			break;
-		if (i != 0)
+		i = 0;
+		while (feof(fgame) == 0 && fgets(str, 15, fgame) != NULL)
 		{
-			if (str[6] == 'B')
-				color = BLUE;
+			if (feof(fgame) != 0)
+				break;
+			if (i != 0)
+			{
+				if (str[6] == 'B')
+					color = BLUE;
+				else
+					color = RED;
+				*py = atoi(&str[8]);
+				*px = atoi(&str[10]);
+				addColorGrid(tab, color, *py, *px);
+				turn = 1 - turn;
+			}
 			else
-				color = RED;
-			*py = atoi(&str[8]);
-			*px = atoi(&str[10]);
-			addColorGrid(tab, color, *py, *px);
-			turn = 1 - turn;
+				i = 1;
 		}
-		else
-			i = 1;
 	}
 	return (turn);
 }
@@ -357,7 +360,6 @@ void loadGame(const char *name, t_hexBoard tab[N][N], int *y, int *x)
 			else
 			{
 				free(str);
-				fprintf(stderr, "1 : erreur dans le fichier save.txt\n");
 				exit(EXIT_FAILURE);
 			}
 			*x = atoi(&str[8]);
@@ -365,7 +367,6 @@ void loadGame(const char *name, t_hexBoard tab[N][N], int *y, int *x)
 			if (*x < 0 || *x > 10 || *y < 0 || *y > 10)
 			{
 				free(str);
-				fprintf(stderr, "2 : erreur dans le fichier save.txt\n");
 				exit(EXIT_FAILURE);
 			}
 			if (addColorGrid(tab, color, *y, *x) == 1)
