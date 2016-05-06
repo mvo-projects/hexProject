@@ -340,46 +340,47 @@ int loadUndo(t_hexBoard tab[N][N], int *py, int *px)
 	return (turn);
 }
 
-void loadGame(const char *name, t_hexBoard tab[N][N], int *y, int *x)
+int loadGame(t_hexBoard tab[N][N], int *y, int *x)
 {
 	FILE	*fhex;
+	FILE	*fgame;
 	char	*str;
 	e_Color color;
+	int		turn;
 
-	str = (char *)malloc(sizeof(char) * 20);
+	turn = 1;
+	str = (char *)malloc(sizeof(char) * 15);
 	assert(str != NULL);
-	if ((fhex = fopen(name, "r")) != NULL)
+	if ((fhex = fopen("save.txt", "r")) != NULL)
 	{
-		fseek(fhex, sizeof(char) * (N * (N + 1) + 28), SEEK_SET);
-		while (fgets(str, 20, fhex) != NULL && strcmp(str, "\\endgame\n"))
+		if ((fgame = fopen(".tmpgame.txt", "w")) == NULL)
 		{
+			fprintf(stderr, "failed to open .tmpgame\n");
+			fclose(fhex);
+			free(str);
+			exit(EXIT_FAILURE);
+		}
+		fprintf(fgame, "\\game\n");
+		fseek(fhex, sizeof(char) * (N * (N + 1) + 28), SEEK_SET);
+		while (fgets(str, 15, fhex) != NULL && strcmp(str, "\\endgame\n"))
+		{
+			fprintf(fgame, "%s", str);
+			if (feof(fhex) != 0)
+				break;
 			if (str[6] == 'B')
 				color = BLUE;
 			else if (str[6] == 'R')
 				color = RED;
-			else
-			{
-				free(str);
-				exit(EXIT_FAILURE);
-			}
 			*x = atoi(&str[8]);
 			*y = atoi(&str[10]);
-			if (*x < 0 || *x > 10 || *y < 0 || *y > 10)
-			{
-				free(str);
-				exit(EXIT_FAILURE);
-			}
-			if (addColorGrid(tab, color, *y, *x) == 1)
-			{
-				if (color == BLUE)
-					printf("BLUE WON !!\n");
-				else
-					printf("RED WON !!\n");
-			}
+			addColorGrid(tab, color, *y, *x);
+			turn = 1 - turn;
 		}
 		fclose(fhex);
+		fclose(fgame);
 	}
 	free(str);
+	return (turn);
 }
 
 

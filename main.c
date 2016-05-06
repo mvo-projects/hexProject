@@ -14,6 +14,154 @@
 #define MAXBALLS 121
 
 
+void save_Game(t_hexBoard tab[N][N])
+{
+	FILE *fboard;
+	FILE *fgame;
+	FILE *fsave;
+	char *str;
+
+	str = (char *)malloc(sizeof(char) * 15);
+	assert(str != NULL);
+	if ((fsave = fopen("save.txt", "w")) == NULL)
+	{
+		fprintf(stderr, "Failed saving file...\n");
+		exit(EXIT_FAILURE);
+	}
+	fprintf(fsave, "\\hex\n");
+	saveBoard(".tmpboard.txt", tab);
+	if ((fboard = fopen(".tmpboard.txt", "r")) == NULL)
+	{
+		fprintf(stderr, "here\n");
+		fclose(fsave);
+		fprintf(stderr, "Failed opening file...\n");
+		exit(EXIT_FAILURE);
+	}
+	while (!feof(fboard) && fgets(str, 15, fboard) != NULL)
+	{
+		if (feof(fboard))
+			break;
+		fprintf(fsave, "%s", str);
+	}
+	if ((fgame = fopen(".tmpgame.txt", "r")) == NULL)
+	{
+		fprintf(stderr, "here2\n");
+		fclose(fsave);
+		fclose(fboard);
+		fprintf(stderr, "Failed opening file...\n");
+		exit(EXIT_FAILURE);
+	}
+	while (!feof(fgame) && fgets(str, 15, fgame) != NULL)
+	{
+		if (feof(fgame))
+			break;
+		fprintf(fsave, "%s", str);
+	}
+	fprintf(fsave, "\\endgame\n");
+	fprintf(fsave, "\\endhex\n");
+	fclose(fboard);
+	fclose(fgame);
+	fclose(fsave);
+}
+
+int print_pause(SDL_Surface* screen, TTF_Font *font, t_hexBoard tab[N][N])
+{
+	const char* pause[NUMMENU] = {"Continue", "Save Game", "Exit" };
+	const char* save = "Game saved.";
+	SDL_Surface *menus[NUMMENU + 1];
+	SDL_Rect pos[NUMMENU + 1];
+	SDL_Event event;
+	bool selected[NUMMENU] = {false, false, false};
+	int	i, j, x, y;
+	SDL_Color color[3] = {{255, 255, 255, 0}, {255, 0, 0, 0}, {0, 0, 0, 0}};
+
+	for (i = 0; i < NUMMENU; i++)
+	{
+		menus[i] = TTF_RenderText_Solid(font, pause[i], color[0]);
+		pos[i].x = 340;
+		pos[i].y = 250 + (i * 50);
+	}
+	pos[i].x = 652;
+	pos[i].y = 25;
+	SDL_FillRect(screen, &screen->clip_rect, SDL_MapRGB(screen->format,0x00,0x00,0x00));
+	while (1)
+	{
+		while (SDL_PollEvent(&event))
+		{
+			switch (event.type)
+			{
+				case SDL_QUIT:
+					for (i = 0; i < NUMMENU; i++)
+						SDL_FreeSurface(menus[i]);
+					return (2);
+				case SDL_KEYDOWN:
+ 					if (event.key.keysym.sym == SDLK_ESCAPE)
+					{
+						for (i = 0; i < NUMMENU; i++)
+							SDL_FreeSurface(menus[i]);
+						return (0);
+					}
+				case SDL_MOUSEMOTION:
+					x = event.motion.x;
+					y = event.motion.y;
+					for (i = 0; i < NUMMENU; i++)
+					{
+						if (x >= pos[i].x && x <= (pos[i].x + pos[i].w) && y >= pos[i].y && y <= (pos[i].y + pos[i].h))
+						{
+							if (selected[i] == false)
+							{
+								selected[i] = true;
+								SDL_FreeSurface(menus[i]);
+								menus[i] = TTF_RenderText_Solid(font, pause[i], color[1]);
+							}
+						}
+						else
+						{
+							if (selected[i] == true)
+							{
+								selected[i] = false;
+								SDL_FreeSurface(menus[i]);
+								menus[i] = TTF_RenderText_Solid(font, pause[i], color[0]);
+							}
+						}
+					}
+					break;
+				case SDL_MOUSEBUTTONDOWN:
+					x = event.button.x;
+					y = event.button.y;
+					for (i = 0; i < NUMMENU; i++)
+					{
+						if (x >= pos[i].x && x <= (pos[i].x + pos[i].w) && y >= pos[i].y && y <= (pos[i].y + pos[i].h))
+						{
+							if (i == 1)
+							{
+								save_Game(tab);
+								menus[NUMMENU] = TTF_RenderText_Solid(font, save, color[0]);
+								SDL_BlitSurface(menus[NUMMENU], NULL, screen, &pos[NUMMENU]);
+								SDL_Flip(screen);
+								SDL_FreeSurface(menus[NUMMENU]);
+								sleep(1);
+								menus[NUMMENU] = TTF_RenderText_Solid(font, save, color[2]);
+								SDL_BlitSurface(menus[NUMMENU], NULL, screen, &pos[NUMMENU]);
+								SDL_Flip(screen);
+								SDL_FreeSurface(menus[NUMMENU]);
+							}
+							else
+							{
+								for (j = 0; j < NUMMENU; j++)
+									SDL_FreeSurface(menus[j]);
+								return (i);
+							}
+						}
+					}
+					break;
+			}
+		}
+		for (i = 0; i < NUMMENU; i++)
+			SDL_BlitSurface(menus[i], NULL, screen, &pos[i]);
+		SDL_Flip(screen);
+	}
+}
 
 char * delete_newline(char *str)
 {
@@ -759,7 +907,6 @@ void addPlayersWithMode(SDL_Surface *str[6], TTF_Font *font, const char *players
 
 int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int mode, int start, int turn, int lasty, int lastx)
 {
-	Uint32 time;
 	const char* labels[NUMMODE] = {"UNDO", "HISTORY", "PAUSE"};
 	const char* players[NUMPLAYER] = {"Player", "Player1", "Player2", "IA1", "IA2"};
 	const char* sentence1 = "It's your turn : ";
@@ -779,11 +926,13 @@ int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int m
 	SDL_Color color[4] = {{0,0,0,0}, {255,0,0,0}, {255,255,255,0}, {0,0,255,0}};
 	int x, y;
 	int i, j;
+	int flag;
 	int play;
 	int count;
 
 	i = 0;
 	count = 0;
+	flag = 0;
 	ecolor = RED;
  	imgmain = IMG_Load("images/board.png");
 	SDL_BlitSurface(imgmain, NULL, screen, NULL);
@@ -863,7 +1012,6 @@ int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int m
 	fgame = NULL;
 	while (1)
 	{
-		time = SDL_GetTicks();
 		while (SDL_PollEvent(&event))
 		{
 			switch(event.type)
@@ -912,7 +1060,7 @@ int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int m
 								fclose(fgame);
 								fgame = NULL;
 							}
-							if (i != 1)
+							if (i == 0)
 							{
 								for (j = 0; j < NUMMENU; j++)
 									SDL_FreeSurface(menu[j]);
@@ -926,15 +1074,34 @@ int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int m
 								}
 								return (i);
 							}
-							if (i == 1)
+							else
 							{
 								SDL_SaveBMP(screen, ".map.bmp");
-								print_history(screen, font);
+								if (i == 1)
+								{
+									if (print_history(screen, font))
+										flag = 1;
+								}
+								else if (i == 2)
+								{
+									if (print_pause(screen, font, tab) == 2)
+										flag = 1;
+								}
+								if (flag)
+								{
+									for (j = 0; j < NUMMENU; j++)
+										SDL_FreeSurface(menu[j]);
+									for (j = 0; j < 6; j++)
+										SDL_FreeSurface(str[j]);
+									SDL_FreeSurface(imgmain);
+									return (5);
+								}
 								SDL_FreeSurface(imgmain);
 								imgmain = IMG_Load(".map.bmp");
 								SDL_BlitSurface(imgmain, NULL, screen, NULL);
 								SDL_Flip(screen);
 							}
+							
 						}
 					}
 					point = findIndex(x, y);
@@ -1001,20 +1168,28 @@ int playNewGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int m
 				case SDL_KEYDOWN:
  					if (event.key.keysym.sym == SDLK_ESCAPE)
 					{
-						for (j = 0; j < NUMMENU; j++)
-							SDL_FreeSurface(menu[j]);
-						for (j = 0; j < 6; j++)
-							SDL_FreeSurface(str[j]);
+						SDL_SaveBMP(screen, ".map.bmp");
+						if (print_pause(screen, font, tab) == 2)
+						{
+							for (j = 0; j < NUMMENU; j++)
+								SDL_FreeSurface(menu[j]);
+							for (j = 0; j < 6; j++)
+								SDL_FreeSurface(str[j]);
+							SDL_FreeSurface(imgmain);
+							return (5);
+						}
 						SDL_FreeSurface(imgmain);
-						return (2);
+						imgmain = IMG_Load(".map.bmp");
+						SDL_BlitSurface(imgmain, NULL, screen, NULL);
+						SDL_Flip(screen);
 					}
 			}
 		}
 		for (i = 0; i < NUMMENU; i++)
 			SDL_BlitSurface(menu[i], NULL, screen, &pos[i]);
 		SDL_Flip(screen);
-		if (1000/30 > (SDL_GetTicks() - time))
-			SDL_Delay(1000/30 - (SDL_GetTicks() - time));
+	//	if (1000/30 > (SDL_GetTicks() - time))
+	//		SDL_Delay(1000/30 - (SDL_GetTicks() - time));
 	}
 }
 
@@ -1067,7 +1242,7 @@ int	main(void)
 	while (menu != 2 && (menu = chooseMenu(screen, font)) != 2)
 	{
 		fprintf(stderr, "menu = %d\n", menu);
-		if (menu == 0)
+		if (menu == 0 || menu == 1)
 		{
 			mode = 0;
 			flag = 1;
@@ -1084,6 +1259,8 @@ int	main(void)
 						x = -1;
 						y = -1;
 						turn = 1;
+						if (menu == 1)
+							turn = loadGame(tab, &y, &x);
 						if ((play = playNewGame(screen, font, tab, mode, start, turn, y, x)) == 5)
 							mode = 5;
 						else if (play == 0)
@@ -1104,7 +1281,6 @@ int	main(void)
 							fprintf(stderr, "BLUE won\n");
 						else if (play == 5)
 							mode = 5;
-							
 					}
 				}
 				else if (mode == 1 || mode == 2)
@@ -1123,16 +1299,17 @@ int	main(void)
 					flag = 0;
 				}
 			}
-			if (mode == 5 && flag)
-				menu = 2;
 		}
+		if (mode == 5 && flag)
+			menu = 2;
 		removetmpfiles();
 	}
 	SDL_FreeSurface(screen);
 	TTF_CloseFont(font);
 	TTF_Quit();
 	SDL_Quit();
-	
+	exit(EXIT_SUCCESS);
+}	
 /*	none = IMG_Load("images/menu.png");
 	opt1 = IMG_Load("images/button_jouer.png");
 	opt2 = IMG_Load("images/button_charger.png");
@@ -1183,6 +1360,4 @@ int	main(void)
 	SDL_FreeSurface(menu);
 
 	screen = menu = none = opt1 = opt2 = opt3 = NULL;
-	SDL_Quit();
-*/	exit(EXIT_SUCCESS);
-}
+	SDL_Quit();*/

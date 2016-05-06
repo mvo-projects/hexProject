@@ -36,7 +36,7 @@ int	addColorGrid(t_hexBoard tab[N][N], e_Color color, int x, int y);
 
 int loadUndo(t_hexBoard tab[N][N], int *py, int *px);
 void undoGame(int line);
-void loadGame (const char *name, t_hexBoard tab[N][N], int *y, int *x);
+int loadGame (t_hexBoard tab[N][N], int *y, int *x);
 int countlinegame(void);
 void printPlay(FILE **fgame, e_Color color, int x, int y);
 void saveBoard(const char *name, t_hexBoard tab[N][N]);
