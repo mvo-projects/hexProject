@@ -371,8 +371,8 @@ int loadGame(t_hexBoard tab[N][N], int *y, int *x)
 				color = BLUE;
 			else if (str[6] == 'R')
 				color = RED;
-			*x = atoi(&str[8]);
-			*y = atoi(&str[10]);
+			*y = atoi(&str[8]);
+			*x = atoi(&str[10]);
 			addColorGrid(tab, color, *y, *x);
 			turn = 1 - turn;
 		}
