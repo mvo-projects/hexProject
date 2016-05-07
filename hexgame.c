@@ -376,7 +376,7 @@ int playGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int mode
 							{
 								//SDL_SaveBMP(screen, "lastvictory.bmp");
 								for (j = 0; j < NUMMENU; j++)
-								²	SDL_FreeSurface(menu[j]);
+									SDL_FreeSurface(menu[j]);
 								for (j = 0; j < 6; j++)
 									SDL_FreeSurface(str[j]);
 								SDL_FreeSurface(imgmain);
