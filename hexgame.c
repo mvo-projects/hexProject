@@ -15,6 +15,8 @@ SDL_Rect insertPoint(int x, int y)
 
 	res.x = x;
 	res.y = y;
+	res.h = 0;
+	res.w = 0;
 	return (res);
 }
 
@@ -178,6 +180,13 @@ void initPlayersWithMode(SDL_Surface *str[6], TTF_Font *font, const char *player
 
 void init_positionGame(SDL_Rect pos[9])
 {
+	pos[3] = insertPoint(300, 56);
+	pos[4] = insertPoint(357, 116);
+	pos[5] = insertPoint(186, 557);
+	pos[6] = insertPoint(350, 557);
+	pos[7] = insertPoint(520, 557);
+	pos[8] = insertPoint(560, 557);
+/*
 	pos[3].x = 300;
 	pos[3].y = 56;
 	pos[4].x = 357;
@@ -187,6 +196,7 @@ void init_positionGame(SDL_Rect pos[9])
 	pos[6].x = 350;
 	pos[7].x = 520;
 	pos[8].x = 560;
+*/
 }
 
 int playGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int mode, int start, int turn, int lasty, int lastx)

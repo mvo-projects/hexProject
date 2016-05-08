@@ -95,7 +95,7 @@ int print_pause(SDL_Surface* screen, TTF_Font *font, t_hexBoard tab[N][N])
 	SDL_Surface *menus[NUMPAUSE + 1];
 	SDL_Rect pos[NUMPAUSE + 1];
 	SDL_Event event;
-	bool selected[NUMMENU] = {false, false, false, false};
+	bool selected[NUMPAUSE] = {false, false, false, false};
 	int	i, j, x, y;
 	SDL_Color color[3] = {{255, 255, 255, 0}, {255, 0, 0, 0}, {0, 0, 0, 0}};
 
