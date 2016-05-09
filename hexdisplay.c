@@ -10,16 +10,6 @@
 #include "hexgame.h"
 #include "hexdisplay.h"
 
-/*
-void print_allpos(SDL_Rect pos[12])
-{
-	int i;
-
-	for (i = 0; i < 12; i++)
-		fprintf(stderr, "pos[%d].x = %d, pos[%d].y = %d\n", i, pos[i].x, i, pos[i].y);
-}
-*/
-
 void display_winner(SDL_Surface *screen, e_Color color)
 {
 	SDL_Surface *imgmain;

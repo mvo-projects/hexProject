@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -ansi
+CFLAGS = -Wall -Wextra -Werror
 INCLUDE = includes/
 SRC = hexboard.c hexsave.c hexdisplay.c hexhistory.c hexgame.c main.c
 LIBS = -lSDL -lSDL_image -lSDL_ttf
