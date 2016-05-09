@@ -1,6 +1,7 @@
 # hexProject
 
 Computer Science 2nd Year Project - Hex Game
+Human vs AI still in progress
 
 ## Installation
 
