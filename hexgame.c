@@ -186,17 +186,6 @@ void init_positionGame(SDL_Rect pos[9])
 	pos[6] = insertPoint(350, 557);
 	pos[7] = insertPoint(520, 557);
 	pos[8] = insertPoint(560, 557);
-/*
-	pos[3].x = 300;
-	pos[3].y = 56;
-	pos[4].x = 357;
-	pos[4].y = 116;
-	pos[5].x = 186;
-	pos[5].y = pos[6].y = pos[7].y = pos[8].y = 557;
-	pos[6].x = 350;
-	pos[7].x = 520;
-	pos[8].x = 560;
-*/
 }
 
 int playGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int mode, int start, int turn, int lasty, int lastx)
@@ -384,7 +373,7 @@ int playGame(SDL_Surface* screen, TTF_Font* font, t_hexBoard tab[N][N], int mode
 							SDL_Flip(screen);
 							if (play == 1)
 							{
-								//SDL_SaveBMP(screen, "lastvictory.bmp");
+								SDL_SaveBMP(screen, "lastvictory.bmp");
 								for (j = 0; j < NUMMENU; j++)
 									SDL_FreeSurface(menu[j]);
 								for (j = 0; j < 6; j++)

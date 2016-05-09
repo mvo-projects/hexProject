@@ -1,14 +1,15 @@
 # hexProject
 
-TODO: Write a project description
+Computer Science 2nd Year Project - Hex Game
 
 ## Installation
 
-TODO: Describe the installation process
+Make sure you have SDL, SDL_image and SDL_ttf
 
 ## Usage
 
-TODO: Write usage instructions
+make hex
+and lunch the exec
 
 ## Contributing
 
@@ -18,14 +19,6 @@ TODO: Write usage instructions
 4. Push to the branch: `git push origin my-new-feature`
 5. Submit a pull request :D
 
-## History
-
-TODO: Write history
-
-## Credits
-
-TODO: Write credits
-
 ## License
 
-TODO: Write license
+EA/MVO/DL 
